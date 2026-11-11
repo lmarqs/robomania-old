@@ -8,6 +8,7 @@ version = "1.6.0"
 
 [tools."http:arduino-cli".platforms]
 linux-x64 = { url = "https://github.com/arduino/arduino-cli/releases/download/v{version}/arduino-cli_{version}_Linux_64bit.tar.gz" }
+windows-x64 = { url = "https://github.com/arduino/arduino-cli/releases/download/v{version}/arduino-cli_{version}_Windows_64bit.zip" }
 
 [tasks."arduino:run"]
 depends = [
