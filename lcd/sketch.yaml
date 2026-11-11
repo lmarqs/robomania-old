@@ -1,0 +1,9 @@
+default_profile: nano
+
+profiles:
+  nano:
+    fqbn: arduino:avr:nano
+    platforms:
+      - platform: arduino:avr (1.8.6)
+    libraries:
+      - LiquidCrystal (1.0.7)
