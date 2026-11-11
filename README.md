@@ -1,7 +1,7 @@
 # arduino
 
 ## Dependencies
-- [mise](https://mise.jdx.dev): installs arduino-cli and Python, and runs the project tasks
+- [mise](https://mise.jdx.dev): installs arduino-cli, Python and uv, and runs the project tasks
 - xxd: converts sketch data files into C headers
 
 ## Setup
@@ -11,7 +11,7 @@ mise install
 mise run setup
 ```
 
-`setup` creates `.env` from `.env.example` and installs the Python packages the ESP32 upload tools need. Set `PORT` in `.env` to the board's serial port.
+`setup` creates `.env` from `.env.example` and syncs `.venv` from `uv.lock` with the Python packages the ESP32 tools need. Set `PORT` in `.env` to the board's serial port.
 
 ## Tasks
 

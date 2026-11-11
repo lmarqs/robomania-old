@@ -5,6 +5,7 @@ ARDUINO_CONFIG_FILE = "{{config_root}}/arduino-cli.yaml"
 
 [tools]
 python = "3.10"
+uv = "0.11.25"
 
 [tools."http:arduino-cli"]
 version = "1.6.0"
@@ -14,7 +15,7 @@ linux-x64 = { url = "https://github.com/arduino/arduino-cli/releases/download/v{
 windows-x64 = { url = "https://github.com/arduino/arduino-cli/releases/download/v{version}/arduino-cli_{version}_Windows_64bit.zip" }
 
 [tasks."setup"]
-description = "Create .env and install Python dependencies of the board tools"
+description = "Create .env and sync the Python venv used by the board tools"
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
@@ -23,8 +24,7 @@ if [ ! -f ".env" ]; then
   cp .env.example .env
 fi
 
-python -m ensurepip --upgrade >/dev/null
-python -m pip install --quiet --disable-pip-version-check --requirement requirements.txt
+uv sync --locked
 """
 
 [tasks."arduino:hexdump"]
