@@ -1,7 +1,10 @@
 [env]
 _.file = ".env"
+_.python.venv = { path = ".venv", create = true }
+ARDUINO_CONFIG_FILE = "{{config_root}}/arduino-cli.yaml"
 
 [tools]
+python = "3.10"
 
 [tools."http:arduino-cli"]
 version = "1.5.1"
@@ -9,42 +12,114 @@ version = "1.5.1"
 [tools."http:arduino-cli".platforms]
 linux-x64 = { url = "https://github.com/arduino/arduino-cli/releases/download/v{version}/arduino-cli_{version}_Linux_64bit.tar.gz" }
 
-[tasks."arduino:run"]
-depends = [
-  "arduino:compile",
-  "arduino:upload",
-  "arduino:monitor",
-]
-
 [tasks."setup"]
+description = "Create .env and install Python dependencies of the board tools"
 run = """
 #!/usr/bin/env bash
+set -euo pipefail
 
 if [ ! -f ".env" ]; then
   cp .env.example .env
 fi
 
-arduino-cli core update-index
-arduino-cli lib  update-index
+python -m ensurepip --upgrade >/dev/null
+python -m pip install --quiet --disable-pip-version-check --requirement requirements.txt
+"""
+
+[tasks."arduino:hexdump"]
+description = "Convert files in <sketch>/data into C headers"
+usage = 'arg "<sketch>" help="Sketch folder"'
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "${usage_sketch}"
+if [ -d data ]; then
+  find data -type f -not -name '*.h' -exec sh -c 'xxd --include "$1" > "$1.h"' _ {} \\;
+fi
 """
 
 [tasks."arduino:compile"]
+description = "Compile a sketch with its default sketch.yaml profile"
+usage = 'arg "<sketch>" help="Sketch folder"'
 run = """
 #!/usr/bin/env bash
+set -euo pipefail
 
-arduino-cli compile
+mise run arduino:hexdump "${usage_sketch}"
+arduino-cli compile "${usage_sketch}" --build-path ".build/${usage_sketch}"
 """
 
 [tasks."arduino:upload"]
+description = "Upload a compiled sketch to the board"
+usage = '''
+arg "<sketch>" help="Sketch folder"
+flag "-p --port <port>" env="PORT" help="Serial port of the board"
+'''
 run = """
 #!/usr/bin/env bash
+set -euo pipefail
 
-arduino-cli upload
+sudo chmod a+rw "${usage_port}"
+arduino-cli upload "${usage_sketch}" --input-dir ".build/${usage_sketch}" --port "${usage_port}"
 """
 
 [tasks."arduino:monitor"]
+description = "Open the serial monitor"
+usage = '''
+flag "-p --port <port>" env="PORT" help="Serial port of the board"
+flag "--baudrate <baudrate>" default="9600"
+flag "--describe" help="List the port settings instead of opening it"
+'''
 run = """
 #!/usr/bin/env bash
+set -euo pipefail
 
-arduino-cli monitor
+sudo chmod a+rw "${usage_port}"
+if [ "${usage_describe:-false}" = "true" ]; then
+  arduino-cli monitor --describe --port "${usage_port}"
+else
+  arduino-cli monitor --config "baudrate=${usage_baudrate}" --port "${usage_port}"
+fi
 """
+
+[tasks."arduino:run"]
+description = "Compile, upload and monitor a sketch"
+usage = '''
+arg "<sketch>" help="Sketch folder"
+flag "-p --port <port>" env="PORT" help="Serial port of the board"
+'''
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+mise run arduino:compile "${usage_sketch}"
+mise run arduino:upload "${usage_sketch}" --port "${usage_port}"
+mise run arduino:monitor --port "${usage_port}"
+"""
+
+[tasks."arduino:spiffs"]
+description = "Build <sketch>/data into a SPIFFS image and flash it to an ESP32"
+usage = '''
+arg "<sketch>" help="Sketch folder"
+flag "-p --port <port>" env="PORT" help="Serial port of the board"
+'''
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Offset and size match the default partition table of esp32:esp32 2.0.14.
+tools=.arduino/data/internal
+mkspiffs=$(echo $tools/esp32_mkspiffs_0.2.3_*/mkspiffs)
+esptool=$(echo $tools/esp32_esptool_py_4.5.1_*/esptool.py)
+image=".build/${usage_sketch}/filesystem.spiffs"
+
+mkdir -p ".build/${usage_sketch}"
+"$mkspiffs" --create "${usage_sketch}/data" --page 256 --block 4096 --size 917504 "$image"
+sudo chmod a+rw "${usage_port}"
+python "$esptool" --baud 460800 --port "${usage_port}" --before default_reset --after hard_reset write_flash 0x310000 "$image"
+"""
+
+[tasks."clean"]
+description = "Remove build output and installed cores and libraries"
+run = "rm -rf .build .arduino"

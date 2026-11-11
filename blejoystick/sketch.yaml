@@ -1,0 +1,10 @@
+default_profile: esp32c3
+
+profiles:
+  esp32c3:
+    fqbn: esp32:esp32:esp32c3
+    platforms:
+      - platform: esp32:esp32 (2.0.14)
+        platform_index_url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+    libraries:
+      - dir: ../library
