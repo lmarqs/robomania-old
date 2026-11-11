@@ -31,7 +31,7 @@ hexdump:
 	fi
 
 compile: hexdump
-	arduino-cli compile $(SKETCH) --build-path .build/$(SKETCH) --FBQN $(FBQN) --library library --config-file arduino-cli.yaml
+	arduino-cli compile $(SKETCH) --build-path .build/$(SKETCH) --FQBN $(FQBN) --library library --config-file arduino-cli.yaml
 
 filesystem.spiffs:
 	sudo chmod a+rw $(PORT)
@@ -41,15 +41,15 @@ filesystem.spiffs:
 
 upload:
 	sudo chmod a+rw $(PORT)
-	arduino-cli upload $(SKETCH) --input-dir .build/$(SKETCH) --FBQN $(FBQN) --port $(PORT) --config-file arduino-cli.yaml
+	arduino-cli upload $(SKETCH) --input-dir .build/$(SKETCH) --FQBN $(FQBN) --port $(PORT) --config-file arduino-cli.yaml
 
 monitor:
 	sudo chmod a+rw $(PORT)
-	arduino-cli monitor --config baudrate=9600 --FBQN $(FBQN) --port $(PORT) --config-file arduino-cli.yaml
+	arduino-cli monitor --config baudrate=9600 --FQBN $(FQBN) --port $(PORT) --config-file arduino-cli.yaml
 
 monitor-describe:
 	sudo chmod a+rw $(PORT)
-	arduino-cli monitor --describe --FBQN $(FBQN) --port $(PORT) --config-file arduino-cli.yaml
+	arduino-cli monitor --describe --FQBN $(FQBN) --port $(PORT) --config-file arduino-cli.yaml
 
 clean:
 	rm -rf .build
