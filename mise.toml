@@ -1,0 +1,50 @@
+[env]
+_.file = ".env"
+
+[tools]
+
+[tools."http:arduino-cli"]
+version = "1.5.1"
+
+[tools."http:arduino-cli".platforms]
+linux-x64 = { url = "https://github.com/arduino/arduino-cli/releases/download/v{version}/arduino-cli_{version}_Linux_64bit.tar.gz" }
+
+[tasks."arduino:run"]
+depends = [
+  "arduino:compile",
+  "arduino:upload",
+  "arduino:monitor",
+]
+
+[tasks."setup"]
+run = """
+#!/usr/bin/env bash
+
+if [ ! -f ".env" ]; then
+  cp .env.example .env
+fi
+
+arduino-cli core update-index
+arduino-cli lib  update-index
+"""
+
+[tasks."arduino:compile"]
+run = """
+#!/usr/bin/env bash
+
+arduino-cli compile
+"""
+
+[tasks."arduino:upload"]
+run = """
+#!/usr/bin/env bash
+
+arduino-cli upload
+"""
+
+[tasks."arduino:monitor"]
+run = """
+#!/usr/bin/env bash
+
+arduino-cli monitor
+"""
